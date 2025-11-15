@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <button id="theme-toggle" class="theme-toggle">💡</button>
+
+    <div class="container">
+        <h1>Search Results</h1>
+
+        {% if results %}
+            
+            {% if results.error %}
+                <div class="error-box">
+                    <strong>Error:</strong> {{ results.error }}
+                </div>
+            
+            {% elif results.recommendations %}
+                <div class="song-info">
+                    Searched song: <strong>{{ results.input_song.artist }} - {{ results.input_song.song }}</strong>
+                    <br>
+                    Determined mood: <strong>{{ results.input_song.emotion }}</strong>
+                </div>
+                
+                <h2>Recommendations (based on similar mood and text):</h2>
+                <ul class="results-list">
+                    {% for rec in results.recommendations %}
+                        <li class="results-list-item">
+                            <strong>{{ rec.artist }} - {{ rec.song }}</strong>
+                            <br>
+                            (Similarity: {{ "%.2f"|format(rec.similarity) }})
+                        </li>
+                    {% endfor %}
+                </ul>
+
+            {% else %}
+                <p>The song '{{ artist }} - {{ song }}' was found, but there are no similar songs in the database.</p>
+            {% endif %}
+
+        {% else %}
+            <p>You did not enter an artist or song title.</p>
+        {% endif %}
+
+        <a href="/" class="back-link">&laquo; Back to new search</a>
+    </div>
+
+    <script src="{{ url_for('static', filename='theme-toggle.js') }}"></script>
+</body>
+</html>

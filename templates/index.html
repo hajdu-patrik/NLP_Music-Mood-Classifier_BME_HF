@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Recommendation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    
+    <button id="theme-toggle" class="theme-toggle">💡</button>
+
+    <div class="container">
+        <h1>🎶 Music Classifier</h1>
+        <form action="/search" method="GET">
+            <div class="form-group">
+                <label for="artist" class="form-label">Artist:</label>
+                <input type="text" id="artist" name="artist" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="song" class="form-label">Song title:</label>
+                <input type="text" id="song" name="song" class="form-control" required>
+            </div>
+            <input type="submit" value="Search for recommendations" class="btn">
+        </form>
+    </div>
+
+    <script src="{{ url_for('static', filename='theme-toggle.js') }}"></script>
+</body>
+</html>
