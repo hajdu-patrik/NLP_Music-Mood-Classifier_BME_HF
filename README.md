@@ -1,36 +1,83 @@
-# Music Mood Recommender
+# 🎵 Music Mood Classifier
 
-This project is a Python-based NLP system that analyzes song lyrics to determine their emotional profile and recommends similar songs. It was built for the "Natural Language and Semantic Technologies" course at BME-VIK.
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Framework](https://img.shields.io/badge/Framework-Flask-black.svg)](https://flask.palletsprojects.com/)
+[![Libraries](https://img.shields.io/badge/Libraries-sklearn%20%7C%20pandas%20%7C%20nltk-orange.svg)](https://scikit-learn.org/)
 
-The system first trains a machine learning model on a large dataset of emotionally-labeled texts. It then uses this model to classify songs from the Spotify Million Song Dataset into six emotional categories (sadness, joy, love, anger, fear, surprise). Finally, it provides recommendations based on both matching emotions and textual similarity (TF-IDF & Cosine Similarity).
+A Python-based NLP system and web application that analyzes the emotional profile of song lyrics and recommends songs with a similar mood. The project was developed as part of the **BME-VIK "Natural Language and Semantic Technologies"** course.
 
-## Features
+The system consists of two main components:
 
-* **Emotion Classification:** Classifies song lyrics into one of six core emotions.
-* **Similarity-Based Recommendation:** Recommends songs that share the same emotional profile and have similar lyrical content.
-* **Interactive CLI:** A simple command-line interface to input an artist and song title.
-* **Robust Input Handling:** Cleans and normalizes user input (handles whitespace and case-insensitivity).
+1. **Business Logic (`business_logic.py`)** – NLP preprocessing, model training, emotion recognition, similarity calculation, and model saving.
+2. **Web App (`app.py`)** – Flask-based server that serves the search interface and displays the results.
 
-## Tech Stack
+---
 
-* **Python 3.10+**
-* **Scikit-learn:** For machine learning (Pipeline, TF-IDF, Logistic Regression, Cosine Similarity).
-* **Pandas:** For data loading and manipulation.
-* **NLTK:** For text preprocessing (tokenization, stopwords).
+## 🚀 Features
 
-## Datasets Used
+- 🎭 **Emotion Classification** – 6 categories: *sadness, joy, love, anger, fear, surprise*
+- 🎶 **Similarity-Based Recommendation** – based on TF-IDF + Cosine Similarity
+- 🌐 **Web Interface** – clean, responsive UI
+- 🌗 **Dark/Light Mode** – preference saved in browser
+- ⚡ **Model Persistence** – one-time training, fast loading
+- 🔁 **Force Regeneration** – retraining with `--regenerate` flag
+
+
+---
+
+## 🛠️ Tech Stack
+
+- **Backend:** Python 3.10+
+- **Web Server:** Flask
+- **ML/NLP:** Scikit-learn, TF-IDF, Logistic Regression, Cosine Similarity
+- **Data:** Pandas, NumPy
+- **Preprocessing:** NLTK
+- **Model Saving:** Joblib, Scipy
+- **Frontend:** HTML5, CSS3, JavaScript
+
+---
+
+## 📂 Project Structure
+```
+Music-Mood-Classifier/
+├── app/
+│ ├── business_logic.py # Core NLP/ML logic
+│ └── app.py # Flask server
+│
+├── sources/
+│ ├── spotify_millsongdata.csv
+│ └── emotions.csv
+│
+├── imports/
+│ └── requirements.txt
+│
+├── model/
+│ └── (Generated artifacts)
+│
+├── static/
+│ ├── style.css
+│ └── theme-toggle.js
+│
+└── templates/
+├── index.html
+└── results.html
+```
+
+---
+
+## 💾 Datasets Used
 
 1.  **Emotion Classification Model:** [Emotions in Text Dataset](https://www.kaggle.com/datasets/nelgiriyewithana/emotions/data) (approx. 417k labeled texts).
 2.  **Song Database:** [Spotify Million Song Dataset](https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset) (approx. 57k songs with lyrics).
 
 ---
 
-## Setup & Usage
+## ⚙️ Setup & Usage
 
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
+git clone [https://github.com/hajdu-patrik/NLP_Music-Mood-Classifier_BME_HF]
 cd your-repo-name
 ```
 
@@ -39,7 +86,7 @@ cd your-repo-name
 **Windows (Git Bash):**
 ```bash
 python -m venv .venv
-source .venv/Scripts/activate
+source .venv/Scripts/activate"
 ```
 
 **macOS/Linux:**
@@ -51,7 +98,7 @@ source .venv/bin/activate
 ### 3. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r imports/requirements.txt
 ```
 
 ### 4. Download Datasets
@@ -59,17 +106,39 @@ pip install -r requirements.txt
 1.  Download the [Spotify Dataset](https://www.kaggle.com/datasets/notshrirang/spotify-million-song-dataset) and place the `spotify_millsongdata.csv` in the root folder.
 2.  Download the [Emotions Dataset](https://www.kaggle.com/datasets/nelgiriyewithana/emotions/data) and place the `emotions.csv` (you may need to rename it from `text.csv`) in the root folder.
 
-### 5. Run the Application
+### 5. Run the Application (Two-Step Process)
 
-Once the environment is active and the CSVs are in place, run the script:
+#### 🔧 Step 5.1 — First-Time Setup (Training)
+The --regenerate flag is mandatory when starting the model for the first time:
+- load the raw CSVs
+- train the emotion model
+- analyze all 57k+ songs
+- build the similarity matrix
+- save everything to the model/ directory
 
 ```bash
-python main.py
+python app/app.py --regenerate
 ```
 
-The script will first train the emotion model (which may take a few minutes) and then launch the interactive prompt.
+Once the console prints this message, stop the server with Ctrl + C
+```arduino
+Initialization complete. Server is running.
+```
 
-## Example Interaction
+#### ▶️ Step 5.2 — Run the Web App (Normal Use)
+After that, you can start it without the flag:
+```bash
+python app/app.py
+```
+The server will be available here:
+- http://127.0.0.1:5000
+- http://localhost:5000
+
+Open it in your browser to use it.
+
+---
+
+## 🎮 Console Interaction Example
 
 ```bash
 --- Music Mood Recommender System Started ---
@@ -91,6 +160,6 @@ Recommendations (based on similar emotion and text):
 Enter artist name: exit
 ```
 
-## Model Performance
+## 📊 Model Performance
 
 The emotion classification model (Logistic Regression on TF-IDF features) achieved a **90% weighted average F1-score** on the validation set (83,362 samples).
