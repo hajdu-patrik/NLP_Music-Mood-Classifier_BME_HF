@@ -117,9 +117,7 @@ h1, h2 {
 /* --- Result-Specific Styles --- */
 .error-box {
     color: #D8000C;
-    background: #FFD2D2;
-    padding: 1em;
-    border-radius: 4px;
+    font-size: large
 }
 
 .song-info {
