@@ -1,9 +1,4 @@
-# Ignore large data files
 *.csv
-
-# Ignore documents
 *.docx
 *.pdf
-
-# Python's virtual enviroment
 .venv/
