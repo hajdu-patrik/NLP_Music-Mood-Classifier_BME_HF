@@ -1,4 +1,3 @@
-# --- Importing to read input files, create vectors, and train models ---
 import pandas as pd
 import numpy as np
 import time
@@ -15,7 +14,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report
 from sklearn.metrics.pairwise import cosine_similarity
 
-# --- Importing for saving and loading Python objects and handling command line arguments  ---
 import os
 import joblib
 import argparse

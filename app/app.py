@@ -1,4 +1,3 @@
-# --- Importing to use BLL, web and arguments ---
 from flask import Flask, render_template, request
 import business_logic as bl
 import argparse
@@ -13,7 +12,7 @@ artifacts = None
 # --- Path Definitions ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..'))
-TEMPLATE_DIR = os.path.join(PROJECT_ROOT, 'templates')
+TEMPLATE_DIR = os.path.join(PROJECT_ROOT, 'template')
 STATIC_DIR = os.path.join(PROJECT_ROOT, 'static')
 
 
