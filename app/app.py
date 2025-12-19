@@ -1,49 +1,75 @@
-from flask import Flask, render_template, request
-import business_logic as bl
-import argparse
 import os
+import sys
+from flask import Flask, render_template, request
 
-
-# --- Global Artifacts ---
-# These are loaded only once when the application starts!
-artifacts = None
-
-
-# --- Path Definitions ---
+# --- 1. Path Definitions & Setup ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
+
 PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..'))
 TEMPLATE_DIR = os.path.join(PROJECT_ROOT, 'template')
 STATIC_DIR = os.path.join(PROJECT_ROOT, 'static')
 
+# --- 2. Import Business Logic (Safe Import) ---
+bl = None
+import_error = None
+try:
+    import business_logic as bl
+except Exception as e:
+    # Elkapunk MINDEN hibát (nem csak ImportError-t), pl. OSErrort az NLTK-tól
+    print(f"CRITICAL ERROR: Could not import business_logic. {e}")
+    import_error = str(e)
 
-# Initialize the Flask application, specifying the correct template and static folder paths
+# --- 3. Flask App Initialization ---
 app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 
+# --- 4. Global Artifacts & Lazy Loading ---
+artifacts = None
 
-# --- Web Routes ---
+def get_artifacts():
+    global artifacts
+    if artifacts is None and bl is not None:
+        print("Loading artifacts for the first time...")
+        try:
+            # force_regenerate=False kritikus Vercelen!
+            artifacts = bl.initialize_app(force_regenerate=False)
+        except Exception as e:
+            print(f"Error loading artifacts: {e}")
+            return None
+    return artifacts
+
+# --- 5. Web Routes ---
 @app.route('/')
 def index():
-    # It will look for 'index.html' in the specified TEMPLATE_DIR
     return render_template('index.html')
-
 
 @app.route('/search')
 def search():
-    # 1. Read search parameters from the URL (e.g., /search?artist=...&song=...)
+    if bl is None:
+        return render_template('results.html', results={"error": f"Server Startup Error: {import_error}"})
+
+    data = get_artifacts()
+    if data is None:
+        return render_template(
+            'results.html', 
+            results={"error": "Models could not be loaded. Please check server logs."}
+        )
+
     artist_name = request.args.get('artist')
     song_name = request.args.get('song')
 
     results = None
     if artist_name and song_name:
-        # 2. Call the get_recommendations function from 'business_logic.py'
-        results = bl.get_recommendations(
-            artist_name,
-            song_name, 
-            artifacts["lyrics_df"], 
-            artifacts["tfidf_matrix"]
-        )
+        try:
+            results = bl.get_recommendations(
+                artist_name,
+                song_name, 
+                data["lyrics_df"], 
+                data["tfidf_matrix"]
+            )
+        except Exception as e:
+            results = {"error": f"Error processing request: {str(e)}"}
     
-    # 3. Pass the results to the 'results.html' template for rendering
     return render_template(
         'results.html', 
         artist=artist_name,
@@ -51,35 +77,18 @@ def search():
         results=results
     )
 
-# --- NEW: 404 Error Handler ---
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
-# --- Application Startpoint ---
 if __name__ == '__main__':
-    # Parse command-line arguments (e.g., --regenerate)
-    parser = argparse.ArgumentParser(description="Music Mood Classifier Web App")
-    parser.add_argument(
-        '--regenerate',
-        action='store_true',
-        help="Force regeneration of all models and processed data on start."
-    )
+    # Local development entry point
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--regenerate', action='store_true')
     args = parser.parse_args()
 
-    # 1. Load all models and data into memory ON STARTUP
-    print("Flask app starting...")
-    print("Initializing business logic (this may take a few minutes)...")
-    try:
-        # Pass the 'force_regenerate' flag to the initializer
+    if bl:
+        print("Running locally...")
         artifacts = bl.initialize_app(force_regenerate=args.regenerate)
-        print("Initialization complete. Server is running.")
-        
-        # 2. Run the web server
-        # 'debug=True' helps with development (auto-reloads on save).
-        # This should be set to 'False' in a production environment.
         app.run(debug=True, host='0.0.0.0', port=5000)
-        
-    except RuntimeError as e:
-        print(f"CRITICAL ERROR: {e}")
-        print("Application could not start.")
