@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+sources/spotify_millsongdata.csv
+sources/emotions.csv
+
+.git
+.gitignore
+
+README.md
+LICENSE.md

@@ -10,6 +10,7 @@ from nltk.tokenize import word_tokenize
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import classification_report
 from sklearn.metrics.pairwise import cosine_similarity
@@ -50,7 +51,7 @@ EMOTION_MAP = {
 MODEL_DIR = os.path.join(PROJECT_ROOT, 'model')
 PIPELINE_CACHE_DIR = os.path.join(MODEL_DIR, 'pipeline_cache')
 EMOTION_MODEL_PATH = os.path.join(MODEL_DIR, 'emotion_pipeline.joblib')
-LYRICS_DF_PATH = os.path.join(MODEL_DIR, 'analyzed_lyrics.pkl')
+LYRICS_DF_PATH = os.path.join(MODEL_DIR, 'analyzed_lyrics.pkl.gz')
 LYRICS_MATRIX_PATH = os.path.join(MODEL_DIR, 'lyrics_tfidf_matrix.npz')
 LYRICS_VECTORIZER_PATH = os.path.join(MODEL_DIR, 'lyrics_vectorizer.joblib')
 
@@ -117,7 +118,7 @@ def train_emotion_model(emotions_df):
     os.makedirs(PIPELINE_CACHE_DIR, exist_ok=True)
     emotion_pipeline = Pipeline([
         ('tfidf', TfidfVectorizer(preprocessor=preprocess_text)),
-        ('clf', LogisticRegression(solver='liblinear', random_state=42))
+        ('clf', OneVsRestClassifier(LogisticRegression(solver='liblinear', random_state=42)))
     ], memory=PIPELINE_CACHE_DIR)
     
     start_time = time.time()
@@ -125,7 +126,6 @@ def train_emotion_model(emotions_df):
     print(f"Model training complete. Duration: {time.time() - start_time:.2f} sec.")
     
     # --- Model Evaluation ---
-    # We only run evaluation if the test set is not empty
     if len(X_test) > 0:
         y_pred = emotion_pipeline.predict(X_test)
         print("\n--- Model Evaluation ---")
@@ -294,11 +294,10 @@ def initialize_app(force_regenerate=False):
     if all_files_exist and not force_regenerate:
         artifacts = load_artifacts()
 
-    if artifacts is None: # Ha a betöltés hibás volt, vagy kérték a regenerálást
+    if artifacts is None:
         artifacts = regenerate_artifacts()
     
     if artifacts is None:
-        # Ha a regenerálás sem sikerült (pl. nincsenek CSV-k)
         raise RuntimeError("Could not load or regenerate artifacts. Check source files.")
         
     return artifacts
