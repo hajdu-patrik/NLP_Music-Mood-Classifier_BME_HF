@@ -1,66 +1,90 @@
-from flask import Flask, render_template, request
-import business_logic as bl
-import argparse
+import sys
 import os
+from flask import Flask, render_template, request
+import traceback
 
-# --- Path Definitions ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(BASE_DIR, '..'))
-TEMPLATE_DIR = os.path.join(PROJECT_ROOT, 'template')
-STATIC_DIR = os.path.join(PROJECT_ROOT, 'static')
+# --- Path Setup ---
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
 
-# Initialize Flask
-app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
+# --- Flask App Setup ---
+app = Flask(__name__, template_folder='../template', static_folder='../static')
 
-# --- Global Artifacts Initialization ---
-print("Flask app initializing...")
+# --- Initialization ---
+bl = None
 artifacts = None
+system_error = None
+
+print("Attempting to import business_logic...")
 try:
-    artifacts = bl.initialize_app()
-    print("Initialization complete.")
+    import business_logic as bl_module
+    bl = bl_module
+    print("Import successful. Initializing artifacts...")
+    
+    try:
+        artifacts = bl.initialize_app()
+        if artifacts is None:
+            system_error = "Artifacts loaded but returned None. Check file paths in business_logic."
+        else:
+            print("Initialization complete.")
+            
+    except Exception as e:
+        system_error = f"Error during initialize_app: {str(e)}\nTraceback:\n{traceback.format_exc()}"
+
 except Exception as e:
-    print(f"CRITICAL ERROR during initialization: {e}")
+    system_error = f"CRITICAL: Could not import business_logic.py.\nError: {str(e)}\nTraceback:\n{traceback.format_exc()}"
+
 
 # --- Web Routes ---
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# --- Debug and Error Handling Routes ---
+@app.route('/debug')
+def debug_page():
+    if system_error:
+        return f"<h1>System Error</h1><pre>{system_error}</pre>", 500
+    if artifacts is None:
+         return "<h1>Warning</h1><p>System loaded, but artifacts are None.</p>", 500
+    return "<h1>System OK</h1><p>Business logic loaded and artifacts ready.</p>"
+
+# --- Search Route ---
 @app.route('/search')
 def search():
+    if system_error:
+        return f"<h1>System Error</h1><p>The application failed to start correctly.</p><pre>{system_error}</pre>"
+    
     if artifacts is None:
-        return render_template('results.html', error="System is starting up or failed to load data. Please try again later.")
+        return "<h1>Error</h1><p>Artifacts are missing (None). Please check logs.</p>"
 
     artist_name = request.args.get('artist')
     song_name = request.args.get('song')
 
     results = None
-    if artist_name and song_name:
-        results = bl.get_recommendations(
-            artist_name,
-            song_name, 
-            artifacts["lyrics_df"], 
-            artifacts["tfidf_matrix"]
+    try:
+        if artist_name and song_name:
+            results = bl.get_recommendations(
+                artist_name,
+                song_name, 
+                artifacts["lyrics_df"], 
+                artifacts["tfidf_matrix"]
+            )
+        
+        return render_template(
+            'results.html', 
+            artist=artist_name,
+            song=song_name,
+            results=results
         )
-    
-    return render_template(
-        'results.html', 
-        artist=artist_name,
-        song=song_name,
-        results=results
-    )
+    except Exception as e:
+        return f"<h1>Runtime Error during Search</h1><pre>{traceback.format_exc()}</pre>"
 
+# --- Error Handlers ---
 @app.errorhandler(404)
 def page_not_found(e):
     return render_template('404.html'), 404
 
-# --- Application Startpoint (Only for local dev) ---
+# --- Application Startpoint ---
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--regenerate', action='store_true')
-    args = parser.parse_args()
-
-    if artifacts is None: 
-        artifacts = bl.initialize_app(force_regenerate=args.regenerate)
-
     app.run(debug=True, host='0.0.0.0', port=5000)
